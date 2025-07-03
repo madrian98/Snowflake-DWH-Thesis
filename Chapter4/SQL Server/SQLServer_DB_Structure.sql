@@ -1,0 +1,228 @@
+-- Skrypt do utworzenia struktury tabel i relacji danych TPC-H 
+
+--CREATE DATABASE TESTY_CH4;
+USE TESTY_CH4;
+
+--#####################################
+-- Kasowanie struktur jeœli ju¿ istnieje
+--#####################################
+
+-- TABELE
+DROP TABLE IF EXISTS [dbo].[LINEITEM];  
+DROP TABLE IF EXISTS [dbo].[ORDERS];  
+DROP TABLE IF EXISTS [dbo].[PARTSUPP];  
+DROP TABLE IF EXISTS [dbo].[PART];  
+DROP TABLE IF EXISTS [dbo].[CUSTOMER];  
+DROP TABLE IF EXISTS [dbo].[SUPPLIER];  
+DROP TABLE IF EXISTS [dbo].[NATION];  
+DROP TABLE IF EXISTS [dbo].[REGION];  
+
+
+-- Kasowanie kluczy obcych jeœli istniej¹
+ALTER TABLE [dbo].[LINEITEM] DROP CONSTRAINT [FK_LINEITEM_ORDERS];  
+ALTER TABLE [dbo].[LINEITEM] DROP CONSTRAINT [FK_LINEITEM_PARTSUPP];  
+ALTER TABLE [dbo].[ORDERS] DROP CONSTRAINT [FK_ORDERS_CUSTOMER];  
+ALTER TABLE [dbo].[PARTSUPP] DROP CONSTRAINT [FK_PARTSUPP_PART];  
+ALTER TABLE [dbo].[PARTSUPP] DROP CONSTRAINT [FK_PARTSUPP_SUPPLIER];  
+ALTER TABLE [dbo].[SUPPLIER] DROP CONSTRAINT [FK_SUPPLIER_NATION];  
+ALTER TABLE [dbo].[CUSTOMER] DROP CONSTRAINT [FK_CUSTOMER_NATION];  
+ALTER TABLE [dbo].[NATION] DROP CONSTRAINT [FK_NATION_REGION];
+
+
+
+--#####################################
+-- Tworzenie struktury
+--#####################################
+
+
+
+CREATE TABLE [dbo].[REGION] (  
+    [R_REGIONKEY] INT NOT NULL,  
+    [R_NAME] VARCHAR(25),  
+    [R_COMMENT] VARCHAR(152),  
+    CONSTRAINT [PK_REGION] PRIMARY KEY CLUSTERED ([R_REGIONKEY])  
+);  
+  
+-- Tabela NATION  
+CREATE TABLE [dbo].[NATION] (  
+    [N_NATIONKEY] INT NOT NULL,  
+    [N_NAME] VARCHAR(25),  
+    [N_REGIONKEY] INT,  
+    [N_COMMENT] VARCHAR(152),  
+    CONSTRAINT [PK_NATION] PRIMARY KEY CLUSTERED ([N_NATIONKEY]),  
+    CONSTRAINT [FK_NATION_REGION] FOREIGN KEY ([N_REGIONKEY])  
+        REFERENCES [dbo].[REGION] ([R_REGIONKEY])  
+);  
+  
+-- Tabela SUPPLIER  
+CREATE TABLE [dbo].[SUPPLIER] (  
+    [S_SUPPKEY] INT NOT NULL,  
+    [S_NAME] VARCHAR(25),  
+    [S_ADDRESS] VARCHAR(40),  
+    [S_NATIONKEY] INT,  
+    [S_PHONE] VARCHAR(15),  
+    [S_ACCTBAL] DECIMAL(15,2),  
+    [S_COMMENT] VARCHAR(101),  
+    CONSTRAINT [PK_SUPPLIER] PRIMARY KEY CLUSTERED ([S_SUPPKEY]),  
+    CONSTRAINT [FK_SUPPLIER_NATION] FOREIGN KEY ([S_NATIONKEY])  
+        REFERENCES [dbo].[NATION] ([N_NATIONKEY])  
+);  
+  
+-- Tabela CUSTOMER  
+CREATE TABLE [dbo].[CUSTOMER] (  
+    [C_CUSTKEY] INT NOT NULL,  
+    [C_NAME] VARCHAR(25),  
+    [C_ADDRESS] VARCHAR(40),  
+    [C_NATIONKEY] INT,  
+    [C_PHONE] VARCHAR(15),  
+    [C_ACCTBAL] DECIMAL(15,2),  
+    [C_MKTSEGMENT] VARCHAR(10),  
+    [C_COMMENT] VARCHAR(117),  
+    CONSTRAINT [PK_CUSTOMER] PRIMARY KEY CLUSTERED ([C_CUSTKEY]),  
+    CONSTRAINT [FK_CUSTOMER_NATION] FOREIGN KEY ([C_NATIONKEY])  
+        REFERENCES [dbo].[NATION] ([N_NATIONKEY])  
+);  
+  
+-- Tabela PART  
+CREATE TABLE [dbo].[PART] (  
+    [P_PARTKEY] INT NOT NULL,  
+    [P_NAME] VARCHAR(55),  
+    [P_MFGR] VARCHAR(25),  
+    [P_BRAND] VARCHAR(10),  
+    [P_TYPE] VARCHAR(25),  
+    [P_SIZE] INT,  
+    [P_CONTAINER] VARCHAR(10),  
+    [P_RETAILPRICE] DECIMAL(15,2),  
+    [P_COMMENT] VARCHAR(23),  
+    CONSTRAINT [PK_PART] PRIMARY KEY CLUSTERED ([P_PARTKEY])  
+);  
+  
+-- Tabela PARTSUPP  
+CREATE TABLE [dbo].[PARTSUPP] (  
+    [PS_PARTKEY] INT NOT NULL,  
+    [PS_SUPPKEY] INT NOT NULL,  
+    [PS_AVAILQTY] INT,  
+    [PS_SUPPLYCOST] DECIMAL(15,2),  
+    [PS_COMMENT] VARCHAR(199),  
+    CONSTRAINT [PK_PARTSUPP] PRIMARY KEY CLUSTERED ([PS_PARTKEY], [PS_SUPPKEY]),  
+    CONSTRAINT [FK_PARTSUPP_PART] FOREIGN KEY ([PS_PARTKEY])  
+        REFERENCES [dbo].[PART] ([P_PARTKEY]),  
+    CONSTRAINT [FK_PARTSUPP_SUPPLIER] FOREIGN KEY ([PS_SUPPKEY])  
+        REFERENCES [dbo].[SUPPLIER] ([S_SUPPKEY])  
+);  
+  
+-- Tabela ORDERS  
+CREATE TABLE [dbo].[ORDERS] (  
+    [O_ORDERKEY] BIGINT NOT NULL,  
+    [O_CUSTKEY] INT,  
+    [O_ORDERSTATUS] VARCHAR(10),  
+    [O_TOTALPRICE] DECIMAL(15,2),  
+    [O_ORDERDATE] DATE,  
+    [O_ORDERPRIORITY] VARCHAR(15),  
+    [O_CLERK] VARCHAR(15),  
+    [O_SHIPPRIORITY] INT,  
+    [O_COMMENT] VARCHAR(79),  
+    CONSTRAINT [PK_ORDERS] PRIMARY KEY CLUSTERED ([O_ORDERKEY]),  
+    CONSTRAINT [FK_ORDERS_CUSTOMER] FOREIGN KEY ([O_CUSTKEY])  
+        REFERENCES [dbo].[CUSTOMER] ([C_CUSTKEY])  
+);  
+  
+-- Tabela LINEITEM  
+CREATE TABLE [dbo].[LINEITEM] (  
+    [L_ORDERKEY] BIGINT NOT NULL,  
+    [L_PARTKEY] INT,  
+    [L_SUPPKEY] INT,  
+    [L_LINENUMBER] INT,  
+    [L_QUANTITY] DECIMAL(15,2),  
+    [L_EXTENDEDPRICE] DECIMAL(15,2),  
+    [L_DISCOUNT] DECIMAL(15,2),  
+    [L_TAX] DECIMAL(15,2),  
+    [L_RETURNFLAG] VARCHAR(10),  
+    [L_LINESTATUS] VARCHAR(10),  
+    [L_SHIPDATE] DATE,  
+    [L_COMMITDATE] DATE,  
+    [L_RECEIPTDATE] DATE,  
+    [L_SHIPINSTRUCT] VARCHAR(25),  
+    [L_SHIPMODE] VARCHAR(10),  
+    [L_COMMENT] VARCHAR(44),  
+    CONSTRAINT [PK_LINEITEM] PRIMARY KEY CLUSTERED ([L_ORDERKEY], [L_LINENUMBER]),  
+    CONSTRAINT [FK_LINEITEM_ORDERS] FOREIGN KEY ([L_ORDERKEY])  
+        REFERENCES [dbo].[ORDERS] ([O_ORDERKEY]),  
+    CONSTRAINT [FK_LINEITEM_PARTSUPP] FOREIGN KEY ([L_PARTKEY], [L_SUPPKEY])  
+        REFERENCES [dbo].[PARTSUPP] ([PS_PARTKEY], [PS_SUPPKEY])  
+);
+
+
+
+--#####################################
+-- Indeksy
+--#####################################
+
+
+
+-- Query 1
+CREATE NONCLUSTERED INDEX IX_LINEITEM_OrderKey_Quantity
+ON lineitem (l_orderkey)
+INCLUDE (l_quantity);
+
+CREATE NONCLUSTERED INDEX IX_ORDERS_CustKey_OrderDate
+ON orders (o_custkey, o_orderkey)
+INCLUDE (o_orderdate, o_totalprice);
+
+CREATE NONCLUSTERED INDEX IX_CUSTOMER_NationKey
+ON customer (c_custkey, c_nationkey)
+INCLUDE (c_name);
+
+CREATE NONCLUSTERED INDEX IX_NATION_NationKey
+ON nation (n_nationkey)
+INCLUDE (n_name);
+
+CREATE NONCLUSTERED INDEX IX_ORDERS_OrderKey  
+ON orders (o_orderkey)  
+INCLUDE (o_custkey, o_totalprice, o_orderdate);
+
+
+-- QUERY 2
+
+CREATE NONCLUSTERED INDEX IX_ORDERS_Date_OrderKey
+ON orders (o_orderdate, o_orderkey)
+INCLUDE (o_custkey, o_totalprice);
+
+
+CREATE NONCLUSTERED INDEX IX_LINEITEM_Keys_Analytics
+ON lineitem (l_orderkey, l_partkey, l_suppkey)
+INCLUDE (l_quantity, l_extendedprice, l_discount);
+
+
+
+CREATE NONCLUSTERED INDEX IX_PARTSUPP_Keys_Cost
+ON partsupp (ps_partkey, ps_suppkey)
+INCLUDE (ps_supplycost);
+
+
+
+CREATE NONCLUSTERED INDEX IX_CUSTOMER_Keys_Nation
+ON customer (c_custkey)
+INCLUDE (c_nationkey);
+
+
+
+CREATE NONCLUSTERED INDEX IX_ORDERS_OrderKey_Cover
+ON orders (o_orderkey)
+INCLUDE (o_custkey, o_totalprice, o_orderdate);
+
+
+
+-- Usuwanie indeksów QUERY 1
+DROP INDEX IF EXISTS IX_LINEITEM_OrderKey_Quantity ON lineitem;  
+DROP INDEX IF EXISTS IX_ORDERS_CustKey_OrderDate ON orders;  
+DROP INDEX IF EXISTS IX_CUSTOMER_NationKey ON customer;  
+DROP INDEX IF EXISTS IX_NATION_NationKey ON nation;  
+DROP INDEX IF EXISTS IX_ORDERS_OrderKey ON orders;  
+  
+-- Usuwanie indeksów QUERY 2 
+DROP INDEX IF EXISTS IX_ORDERS_Date_OrderKey ON orders;  
+DROP INDEX IF EXISTS IX_LINEITEM_Keys_Analytics ON lineitem;  
+DROP INDEX IF EXISTS IX_PARTSUPP_Keys_Cost ON partsupp;  
+DROP INDEX IF EXISTS IX_CUSTOMER_Keys_Nation ON customer;  
+DROP INDEX IF EXISTS IX_ORDERS_OrderKey_Cover ON orders;
